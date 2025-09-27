@@ -1,8 +1,5 @@
 // Wait for the HTML document to be fully loaded before running the script
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- CONFIGURATION ---
-    const oddsApiKey = 'YOUR_API_KEY_HERE'; // Make sure your key is still here
 
     // --- DOM ELEMENT REFERENCES ---
     const searchInput = document.getElementById('player-search');
@@ -11,60 +8,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerBoxTemplate = document.querySelector('.player-box-template');
 
     // --- STATE MANAGEMENT ---
-    let allPlayers = {}; 
-    let weeklyProjections = {}; // To store weekly projections
-    let searchTimeout; 
-    let displayedPlayerIds = new Set(); 
-
-    // Team name mapping for consistency between APIs
-    const teamNameMap = {
-        "ARI": "Arizona Cardinals", "ATL": "Atlanta Falcons", "BAL": "Baltimore Ravens",
-        "BUF": "Buffalo Bills", "CAR": "Carolina Panthers", "CHI": "Chicago Bears",
-        "CIN": "Cincinnati Bengals", "CLE": "Cleveland Browns", "DAL": "Dallas Cowboys",
-        "DEN": "Denver Broncos", "DET": "Detroit Lions", "GB": "Green Bay Packers",
-        "HOU": "Houston Texans", "IND": "Indianapolis Colts", "JAX": "Jacksonville Jaguars",
-        "KC": "Kansas City Chiefs", "LAC": "Los Angeles Chargers", "LAR": "Los Angeles Rams",
-        "LV": "Las Vegas Raiders", "MIA": "Miami Dolphins", "MIN": "Minnesota Vikings",
-        "NE": "New England Patriots", "NO": "New Orleans Saints", "NYG": "New York Giants",
-        "NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
-        "SF": "San Francisco 49ers", "SEA": "Seattle Seahawks", "TB": "Tampa Bay Buccaneers",
-        "TEN": "Tennessee Titans", "WAS": "Washington Commanders"
-    };
+    let allPlayers = {}; // Stores all NFL players from the Sleeper API
+    let weeklyProjections = {}; // Stores all weekly projections from the Sleeper API
+    let displayedPlayerIds = new Set(); // Tracks which players are currently displayed
 
     // --- INITIALIZATION ---
+    // Fetches all necessary data from the Sleeper API when the app starts.
     async function initializeApp() {
+        console.log("Initializing app...");
         try {
-            // Fetch player data and weekly projections at the same time
-            const [playersResponse, stateResponse] = await Promise.all([
+            // First, get the current NFL state to find out the season and week
+            const stateResponse = await fetch('https://api.sleeper.app/v1/state/nfl');
+            if (!stateResponse.ok) throw new Error('Failed to fetch NFL state');
+            const nflState = await stateResponse.json();
+            const week = nflState.display_week;
+            const season = nflState.season;
+
+            // Now, fetch all players and this week's projections at the same time for speed
+            const [playersResponse, projectionsResponse] = await Promise.all([
                 fetch('https://api.sleeper.app/v1/players/nfl'),
-                fetch('https://api.sleeper.app/v1/state/nfl')
+                fetch(`https://api.sleeper.app/v1/stats/nfl/regular/${season}/${week}`)
             ]);
             
             if (!playersResponse.ok) throw new Error('Failed to fetch player data');
-            if (!stateResponse.ok) throw new Error('Failed to fetch NFL state');
+            if (!projectionsResponse.ok) throw new Error('Failed to fetch projections data');
 
             allPlayers = await playersResponse.json();
-            const nflState = await stateResponse.json();
-            const week = nflState.week;
-
-            const projectionsResponse = await fetch(`https://api.sleeper.app/v1/stats/nfl/regular/${nflState.season}/${week}`);
-            if(projectionsResponse.ok) {
-                 weeklyProjections = await projectionsResponse.json();
-            }
+            weeklyProjections = await projectionsResponse.json();
             
-            console.log('Player and projection data loaded successfully for Week ' + week);
+            console.log(`Successfully loaded player and projection data for Week ${week}.`);
         } catch (error) {
             console.error("Initialization Error:", error);
+            // Optionally, display an error message to the user on the page
         }
     }
 
-    // --- EVENT LISTENERS ---
-    searchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(handleSearch, 300);
-    });
-
     // --- SEARCH FUNCTIONALITY ---
+    // Handles input in the search bar to find players
     function handleSearch() {
         const query = searchInput.value.toLowerCase().trim();
         searchResultsContainer.innerHTML = ''; 
@@ -82,11 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 relevantPositions.includes(player.position) &&
                 player.active
             )
-            .slice(0, 10); 
+            .slice(0, 7); // Show up to 7 search results
 
         displaySearchResults(results);
     }
-
+    
+    // Displays the filtered search results in a dropdown
     function displaySearchResults(results) {
         if (results.length === 0) {
             searchResultsContainer.style.display = 'none';
@@ -96,8 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
         results.forEach(player => {
             const resultItem = document.createElement('div');
             resultItem.className = 'search-result-item';
+            // Use a default avatar if one doesn't exist
+            const avatar = player.avatar ? `https://sleepercdn.com/avatars/thumb/${player.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
             resultItem.innerHTML = `
-                <img src="https://sleepercdn.com/avatars/thumb/${player.avatar || '0'}" alt="${player.full_name}" class="search-result-avatar">
+                <img src="${avatar}" alt="${player.full_name}" class="search-result-avatar">
                 <div>
                     <strong>${player.full_name}</strong>
                     <span>${player.position}, ${player.team || 'FA'}</span>
@@ -110,52 +93,45 @@ document.addEventListener('DOMContentLoaded', () => {
         searchResultsContainer.style.display = 'block';
     }
 
-    // --- PLAYER SELECTION AND DATA FETCHING ---
+    // --- PLAYER SELECTION & DATA GATHERING ---
+    // Triggered when a player is clicked from the search results
     async function selectPlayer(playerId) {
         if (displayedPlayerIds.has(playerId)) return alert('Player is already displayed.');
         if (displayedPlayerIds.size >= 6) return alert('Maximum of 6 players can be displayed.');
 
-        searchInput.value = '';
+        searchInput.value = ''; // Clear the search bar
         searchResultsContainer.style.display = 'none';
 
         try {
             displayedPlayerIds.add(playerId);
             const playerData = allPlayers[playerId];
+            const gameData = await fetchGameData(playerData.team); // Fetch opponent and game time
+            const projections = weeklyProjections[playerId] || {}; // Get projections we already loaded
 
-            const [gameData, oddsData] = await Promise.all([
-                fetchGameData(playerData.team),
-                fetchOddsData(playerData.team)
-            ]);
-
-            const projections = weeklyProjections[playerId] || {};
-
-            createPlayerBox(playerData, gameData, oddsData, projections);
-
+            createPlayerBox(playerData, gameData, projections);
         } catch (error) {
-            console.error(`Error fetching data for player ${playerId}:`, error);
-            displayedPlayerIds.delete(playerId);
+            console.error(`Error processing player ${playerId}:`, error);
+            displayedPlayerIds.delete(playerId); // Remove from set if there was an error
             alert('Could not fetch all data for the selected player.');
         }
     }
-
-    // --- API HELPER FUNCTIONS ---
     
     // Fetches live schedule data to find the opponent and game time
     async function fetchGameData(teamAbbr) {
-        if (!teamAbbr) return null;
-        // Using ESPN's public API for schedule info
+        if (!teamAbbr) return { opponent: 'BYE', gameTime: 'N/A' };
+        
+        // Using a reliable public API for schedule info
         const scheduleResponse = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
         if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule data');
         const schedule = await scheduleResponse.json();
-
-        const game = schedule.events.find(event => {
-            return event.competitions[0].competitors.some(c => c.team.abbreviation === teamAbbr);
-        });
+        
+        const game = schedule.events.find(event => 
+            event.competitions[0].competitors.some(c => c.team.abbreviation === teamAbbr)
+        );
 
         if (!game) return { opponent: 'BYE', gameTime: 'N/A' };
 
         const competition = game.competitions[0];
-        const playerTeam = competition.competitors.find(c => c.team.abbreviation === teamAbbr);
         const opponentTeam = competition.competitors.find(c => c.team.abbreviation !== teamAbbr);
         
         return {
@@ -164,67 +140,36 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Fetches game odds from The Odds API
-    async function fetchOddsData(teamAbbr) {
-        if (!teamAbbr) return null;
-        
-        const fullTeamName = teamNameMap[teamAbbr];
-        if (!fullTeamName) return null;
-
-        const oddsResponse = await fetch(`https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey=${oddsApiKey}&regions=us&markets=spreads,totals`);
-        if (!oddsResponse.ok) throw new Error('Failed to fetch odds data');
-        const odds = await oddsResponse.json();
-        
-        const game = odds.find(g => g.home_team === fullTeamName || g.away_team === fullTeamName);
-        if (!game || !game.bookmakers.length) return { spread: 'N/A', total: 'N/A' };
-        
-        const market = game.bookmakers[0].markets.find(m => m.key === 'spreads');
-        const totalMarket = game.bookmakers[0].markets.find(m => m.key === 'totals');
-
-        if (!market || !totalMarket) return { spread: 'N/A', total: 'N/A' };
-
-        const teamOutcome = market.outcomes.find(o => o.name === fullTeamName);
-        
-        return {
-            spread: `${teamAbbr} ${teamOutcome.point > 0 ? '+' : ''}${teamOutcome.point}`,
-            total: totalMarket.outcomes[0].point,
-        };
-    }
-
     // --- DOM MANIPULATION ---
-    function createPlayerBox(playerData, gameData, oddsData, projections) {
+    // Builds and displays a player box using the gathered data
+    function createPlayerBox(playerData, gameData, projections) {
         const newBox = playerBoxTemplate.cloneNode(true);
         newBox.classList.remove('player-box-template');
         newBox.style.display = 'block';
 
-        newBox.querySelector('.player-headshot').src = `https://sleepercdn.com/avatars/thumb/${playerData.avatar || '0'}`;
+        // Populate header info
+        const avatar = playerData.avatar ? `https://sleepercdn.com/avatars/thumb/${playerData.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+        newBox.querySelector('.player-headshot').src = avatar;
         newBox.querySelector('.player-name').textContent = playerData.full_name;
         newBox.querySelector('.player-team').textContent = `${playerData.position}, ${playerData.team || 'FA'}`;
         
+        // Populate game info
         if (gameData) {
             newBox.querySelector('.opponent').textContent = gameData.opponent || 'N/A';
             newBox.querySelector('.game-time').textContent = gameData.gameTime;
         }
-        if (oddsData) {
-            newBox.querySelector('.spread').textContent = oddsData.spread || '';
-            newBox.querySelector('.total').textContent = oddsData.total || '';
-        }
-        
-        newBox.querySelector('.stat-value').textContent = Math.floor(Math.random() * 32) + 1; // Placeholder
+
+        // Populate matchup stats (with placeholder rank)
+        newBox.querySelector('.stat-value').textContent = Math.floor(Math.random() * 32) + 1;
         newBox.querySelector('.stat-label').textContent = `FPs to ${playerData.position}`;
         
-        // --- NEW: Populate Player Projections ---
-        const propsList = newBox.querySelector('.player-props ul');
-        propsList.innerHTML = ''; // Clear existing
+        // Populate player projections
+        const propsList = newBox.querySelector('.player-projections ul');
+        propsList.innerHTML = ''; // Clear any default content
         const relevantProps = {
-            'rec_yd': 'Rec Yds:',
-            'rec': 'Receptions:',
-            'pass_yd': 'Pass Yds:',
-            'pass_td': 'Pass TDs:',
-            'rush_yd': 'Rush Yds:',
-            'td': 'Any TD:' // This is a general TD projection
+            'rec_yd': 'Rec Yds:', 'rec': 'Receptions:', 'pass_yd': 'Pass Yds:',
+            'pass_td': 'Pass TDs:', 'rush_yd': 'Rush Yds:', 'rush_td': 'Rush TDs:'
         };
-
         let propsFound = 0;
         for (const propKey in relevantProps) {
             if (projections[propKey]) {
@@ -234,14 +179,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 propsFound++;
             }
         }
-
         if (propsFound === 0) {
             propsList.innerHTML = `<li><span>No projections available</span></li>`;
         }
 
-
-        const closeBtn = newBox.querySelector('.close-btn');
-        closeBtn.addEventListener('click', () => {
+        // Add functionality to the close button
+        newBox.querySelector('.close-btn').addEventListener('click', () => {
             playerComparisonArea.removeChild(newBox);
             displayedPlayerIds.delete(playerData.player_id);
         });
@@ -249,6 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
         playerComparisonArea.appendChild(newBox);
     }
 
-    // --- START THE APP ---
+    // Add event listener to the search bar
+    searchInput.addEventListener('input', handleSearch);
+
+    // Start the application
     initializeApp();
 });
