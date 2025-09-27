@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const week = nflState.display_week;
             const season = nflState.season;
 
-            // Now, fetch all players and this week's projections at the same time for speed
+            // FIX: Changed API endpoint from /stats/ to /projections/
             const [playersResponse, projectionsResponse] = await Promise.all([
                 fetch('https://api.sleeper.app/v1/players/nfl'),
-                fetch(`https://api.sleeper.app/v1/stats/nfl/regular/${season}/${week}`)
+                fetch(`https://api.sleeper.app/v1/projections/nfl/regular/${season}/${week}`)
             ]);
             
             if (!playersResponse.ok) throw new Error('Failed to fetch player data');
@@ -39,12 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Successfully loaded player and projection data for Week ${week}.`);
         } catch (error) {
             console.error("Initialization Error:", error);
-            // Optionally, display an error message to the user on the page
         }
     }
 
     // --- SEARCH FUNCTIONALITY ---
-    // Handles input in the search bar to find players
     function handleSearch() {
         const query = searchInput.value.toLowerCase().trim();
         searchResultsContainer.innerHTML = ''; 
@@ -62,12 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 relevantPositions.includes(player.position) &&
                 player.active
             )
-            .slice(0, 7); // Show up to 7 search results
+            .slice(0, 7);
 
         displaySearchResults(results);
     }
     
-    // Displays the filtered search results in a dropdown
     function displaySearchResults(results) {
         if (results.length === 0) {
             searchResultsContainer.style.display = 'none';
@@ -77,10 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
         results.forEach(player => {
             const resultItem = document.createElement('div');
             resultItem.className = 'search-result-item';
-            // Use a default avatar if one doesn't exist
-            const avatar = player.avatar ? `https://sleepercdn.com/avatars/thumb/${player.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+            
+            // FIX: Using player_id for the official headshot URL
+            const avatar = `https://sleepercdn.com/content/nfl/players/thumb/${player.player_id}.jpg`;
+            const defaultAvatar = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+
             resultItem.innerHTML = `
-                <img src="${avatar}" alt="${player.full_name}" class="search-result-avatar">
+                <img src="${avatar}" onerror="this.onerror=null;this.src='${defaultAvatar}';" alt="${player.full_name}" class="search-result-avatar">
                 <div>
                     <strong>${player.full_name}</strong>
                     <span>${player.position}, ${player.team || 'FA'}</span>
@@ -94,33 +94,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- PLAYER SELECTION & DATA GATHERING ---
-    // Triggered when a player is clicked from the search results
     async function selectPlayer(playerId) {
         if (displayedPlayerIds.has(playerId)) return alert('Player is already displayed.');
         if (displayedPlayerIds.size >= 6) return alert('Maximum of 6 players can be displayed.');
 
-        searchInput.value = ''; // Clear the search bar
+        searchInput.value = '';
         searchResultsContainer.style.display = 'none';
 
         try {
             displayedPlayerIds.add(playerId);
             const playerData = allPlayers[playerId];
-            const gameData = await fetchGameData(playerData.team); // Fetch opponent and game time
-            const projections = weeklyProjections[playerId] || {}; // Get projections we already loaded
+            const gameData = await fetchGameData(playerData.team);
+            const projections = weeklyProjections[playerId] || {};
 
             createPlayerBox(playerData, gameData, projections);
         } catch (error) {
             console.error(`Error processing player ${playerId}:`, error);
-            displayedPlayerIds.delete(playerId); // Remove from set if there was an error
+            displayedPlayerIds.delete(playerId);
             alert('Could not fetch all data for the selected player.');
         }
     }
     
-    // Fetches live schedule data to find the opponent and game time
     async function fetchGameData(teamAbbr) {
         if (!teamAbbr) return { opponent: 'BYE', gameTime: 'N/A' };
         
-        // Using a reliable public API for schedule info
         const scheduleResponse = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
         if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule data');
         const schedule = await scheduleResponse.json();
@@ -141,31 +138,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DOM MANIPULATION ---
-    // Builds and displays a player box using the gathered data
     function createPlayerBox(playerData, gameData, projections) {
         const newBox = playerBoxTemplate.cloneNode(true);
         newBox.classList.remove('player-box-template');
         newBox.style.display = 'block';
 
-        // Populate header info
-        const avatar = playerData.avatar ? `https://sleepercdn.com/avatars/thumb/${playerData.avatar}` : 'https://sleepercdn.com/images/v2/icons/player_default.webp';
-        newBox.querySelector('.player-headshot').src = avatar;
+        // FIX: Using player_id for the official headshot URL and adding a fallback
+        const avatar = `https://sleepercdn.com/content/nfl/players/thumb/${playerData.player_id}.jpg`;
+        const defaultAvatar = 'https://sleepercdn.com/images/v2/icons/player_default.webp';
+        const headshotElement = newBox.querySelector('.player-headshot');
+        headshotElement.src = avatar;
+        headshotElement.onerror = () => { headshotElement.src = defaultAvatar; }; // Fallback if image fails to load
+
         newBox.querySelector('.player-name').textContent = playerData.full_name;
         newBox.querySelector('.player-team').textContent = `${playerData.position}, ${playerData.team || 'FA'}`;
         
-        // Populate game info
         if (gameData) {
             newBox.querySelector('.opponent').textContent = gameData.opponent || 'N/A';
             newBox.querySelector('.game-time').textContent = gameData.gameTime;
         }
 
-        // Populate matchup stats (with placeholder rank)
         newBox.querySelector('.stat-value').textContent = Math.floor(Math.random() * 32) + 1;
         newBox.querySelector('.stat-label').textContent = `FPs to ${playerData.position}`;
         
-        // Populate player projections
         const propsList = newBox.querySelector('.player-projections ul');
-        propsList.innerHTML = ''; // Clear any default content
+        propsList.innerHTML = '';
         const relevantProps = {
             'rec_yd': 'Rec Yds:', 'rec': 'Receptions:', 'pass_yd': 'Pass Yds:',
             'pass_td': 'Pass TDs:', 'rush_yd': 'Rush Yds:', 'rush_td': 'Rush TDs:'
@@ -183,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
             propsList.innerHTML = `<li><span>No projections available</span></li>`;
         }
 
-        // Add functionality to the close button
         newBox.querySelector('.close-btn').addEventListener('click', () => {
             playerComparisonArea.removeChild(newBox);
             displayedPlayerIds.delete(playerData.player_id);
@@ -192,9 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
         playerComparisonArea.appendChild(newBox);
     }
 
-    // Add event listener to the search bar
     searchInput.addEventListener('input', handleSearch);
-
-    // Start the application
     initializeApp();
 });
