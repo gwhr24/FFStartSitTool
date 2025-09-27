@@ -1,0 +1,201 @@
+/* General Body and Theme Styling */
+body {
+    background-color: #0D1B2A; /* Dark navy background */
+    color: #E0E1DD; /* Off-white text for readability */
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* Header and Search Bar */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#player-search {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #415A77; /* Muted blue border */
+    border-radius: 8px;
+    background-color: #1B263B; /* Darker blue for input */
+    color: #E0E1DD;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+#player-search::placeholder {
+    color: #778DA9;
+}
+
+/* This is for the search results dropdown we'll build in the JS step */
+#search-results {
+    position: absolute;
+    width: 100%;
+    background-color: #1B263B;
+    border: 1px solid #415A77;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+/* Player Comparison Area Layout */
+#player-comparison-area {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+/* Individual Player Box Styling (Based on your image) */
+.player-box {
+    background-color: #1B263B; /* Main box background color */
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.player-headshot {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #415A77;
+}
+
+.player-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.player-team {
+    font-size: 0.9rem;
+    color: #778DA9;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #778DA9;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0 10px;
+}
+
+.game-info {
+    background-color: #0d2137; /* Slightly different blue for section */
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.matchup-line {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.opponent {
+    font-weight: 700;
+}
+
+.game-time {
+    color: #778DA9;
+    font-size: 0.8rem;
+}
+
+.matchup-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.stat-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: #9ef01a; /* Lime green from image */
+    color: #0D1B2A;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    margin: 0;
+    font-weight: 500;
+    color: #E0E1DD;
+}
+
+.player-props h4 {
+    text-align: center;
+    color: #41A5EE; /* Light blue for the section title */
+    margin: 0 0 10px 0;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.player-props ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-props li {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+}
+
+.prop-value {
+    font-weight: 700;
+    color: #FF474C; /* Reddish color for odds */
+}
