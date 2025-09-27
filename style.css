@@ -199,3 +199,24 @@ header h1 {
     font-weight: 700;
     color: #FF474C; /* Reddish color for odds */
 }
+.player-headshot {
+    object-fit: cover; /* Prevents image distortion */
+}
+
+/* Adds styling for the search result dropdown */
+.search-result-item {
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-result-item:hover {
+    background-color: #415A77;
+}
+.search-result-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
