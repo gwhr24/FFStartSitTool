@@ -2,8 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     
     // --- CONFIGURATION ---
-    // IMPORTANT: Paste your API key from The Odds API here.
-    const oddsApiKey = '0ee3ceb8b6bd4a72f61773a3cf9aeda5'; 
+    const oddsApiKey = 'YOUR_API_KEY_HERE'; // Make sure your key is still here
 
     // --- DOM ELEMENT REFERENCES ---
     const searchInput = document.getElementById('player-search');
@@ -12,36 +11,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerBoxTemplate = document.querySelector('.player-box-template');
 
     // --- STATE MANAGEMENT ---
-    let allPlayers = {}; // This will store all NFL players from the Sleeper API
-    let searchTimeout; // Used to delay search requests to avoid spamming the API
-    let displayedPlayerIds = new Set(); // Tracks which players are currently displayed
+    let allPlayers = {}; 
+    let weeklyProjections = {}; // To store weekly projections
+    let searchTimeout; 
+    let displayedPlayerIds = new Set(); 
+
+    // Team name mapping for consistency between APIs
+    const teamNameMap = {
+        "ARI": "Arizona Cardinals", "ATL": "Atlanta Falcons", "BAL": "Baltimore Ravens",
+        "BUF": "Buffalo Bills", "CAR": "Carolina Panthers", "CHI": "Chicago Bears",
+        "CIN": "Cincinnati Bengals", "CLE": "Cleveland Browns", "DAL": "Dallas Cowboys",
+        "DEN": "Denver Broncos", "DET": "Detroit Lions", "GB": "Green Bay Packers",
+        "HOU": "Houston Texans", "IND": "Indianapolis Colts", "JAX": "Jacksonville Jaguars",
+        "KC": "Kansas City Chiefs", "LAC": "Los Angeles Chargers", "LAR": "Los Angeles Rams",
+        "LV": "Las Vegas Raiders", "MIA": "Miami Dolphins", "MIN": "Minnesota Vikings",
+        "NE": "New England Patriots", "NO": "New Orleans Saints", "NYG": "New York Giants",
+        "NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
+        "SF": "San Francisco 49ers", "SEA": "Seattle Seahawks", "TB": "Tampa Bay Buccaneers",
+        "TEN": "Tennessee Titans", "WAS": "Washington Commanders"
+    };
 
     // --- INITIALIZATION ---
-    // Fetches all players from Sleeper API when the page loads
     async function initializeApp() {
         try {
-            const response = await fetch('https://api.sleeper.app/v1/players/nfl');
-            if (!response.ok) throw new Error('Failed to fetch player data from Sleeper API');
-            allPlayers = await response.json();
-            console.log('Player data loaded successfully.');
+            // Fetch player data and weekly projections at the same time
+            const [playersResponse, stateResponse] = await Promise.all([
+                fetch('https://api.sleeper.app/v1/players/nfl'),
+                fetch('https://api.sleeper.app/v1/state/nfl')
+            ]);
+            
+            if (!playersResponse.ok) throw new Error('Failed to fetch player data');
+            if (!stateResponse.ok) throw new Error('Failed to fetch NFL state');
+
+            allPlayers = await playersResponse.json();
+            const nflState = await stateResponse.json();
+            const week = nflState.week;
+
+            const projectionsResponse = await fetch(`https://api.sleeper.app/v1/stats/nfl/regular/${nflState.season}/${week}`);
+            if(projectionsResponse.ok) {
+                 weeklyProjections = await projectionsResponse.json();
+            }
+            
+            console.log('Player and projection data loaded successfully for Week ' + week);
         } catch (error) {
             console.error("Initialization Error:", error);
-            // You could display an error message to the user here
         }
     }
 
     // --- EVENT LISTENERS ---
     searchInput.addEventListener('input', () => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(handleSearch, 300); // Debounce search input
+        searchTimeout = setTimeout(handleSearch, 300);
     });
 
     // --- SEARCH FUNCTIONALITY ---
     function handleSearch() {
         const query = searchInput.value.toLowerCase().trim();
-        searchResultsContainer.innerHTML = ''; // Clear previous results
+        searchResultsContainer.innerHTML = ''; 
 
         if (query.length < 2) {
+            searchResultsContainer.style.display = 'none';
             return;
         }
 
@@ -53,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 relevantPositions.includes(player.position) &&
                 player.active
             )
-            .slice(0, 10); // Limit to top 10 results
+            .slice(0, 10); 
 
         displaySearchResults(results);
     }
@@ -67,7 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
         results.forEach(player => {
             const resultItem = document.createElement('div');
             resultItem.className = 'search-result-item';
-            resultItem.textContent = `${player.full_name} (${player.position}, ${player.team || 'FA'})`;
+            resultItem.innerHTML = `
+                <img src="https://sleepercdn.com/avatars/thumb/${player.avatar || '0'}" alt="${player.full_name}" class="search-result-avatar">
+                <div>
+                    <strong>${player.full_name}</strong>
+                    <span>${player.position}, ${player.team || 'FA'}</span>
+                </div>
+            `;
             resultItem.addEventListener('click', () => selectPlayer(player.player_id));
             searchResultsContainer.appendChild(resultItem);
         });
@@ -77,118 +112,134 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PLAYER SELECTION AND DATA FETCHING ---
     async function selectPlayer(playerId) {
-        if (displayedPlayerIds.has(playerId)) {
-            alert('Player is already displayed.');
-            return;
-        }
-        if (displayedPlayerIds.size >= 6) {
-            alert('Maximum of 6 players can be displayed.');
-            return;
-        }
+        if (displayedPlayerIds.has(playerId)) return alert('Player is already displayed.');
+        if (displayedPlayerIds.size >= 6) return alert('Maximum of 6 players can be displayed.');
 
         searchInput.value = '';
-        searchResultsContainer.innerHTML = '';
         searchResultsContainer.style.display = 'none';
 
         try {
-            // Add to displayed list immediately to prevent duplicates
             displayedPlayerIds.add(playerId);
             const playerData = allPlayers[playerId];
 
-            // Fetch game and matchup data concurrently
-            const [oddsData, matchupData] = await Promise.all([
-                fetchOddsData(playerData.team),
-                fetchMatchupData(playerData.team) 
+            const [gameData, oddsData] = await Promise.all([
+                fetchGameData(playerData.team),
+                fetchOddsData(playerData.team)
             ]);
 
-            // Create the player box with all the fetched data
-            createPlayerBox(playerData, oddsData, matchupData);
+            const projections = weeklyProjections[playerId] || {};
+
+            createPlayerBox(playerData, gameData, oddsData, projections);
 
         } catch (error) {
             console.error(`Error fetching data for player ${playerId}:`, error);
-            // Remove from set if there was an error
             displayedPlayerIds.delete(playerId);
             alert('Could not fetch all data for the selected player.');
         }
     }
 
     // --- API HELPER FUNCTIONS ---
+    
+    // Fetches live schedule data to find the opponent and game time
+    async function fetchGameData(teamAbbr) {
+        if (!teamAbbr) return null;
+        // Using ESPN's public API for schedule info
+        const scheduleResponse = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard');
+        if (!scheduleResponse.ok) throw new Error('Failed to fetch schedule data');
+        const schedule = await scheduleResponse.json();
 
-    // Fetches game odds and player props from The Odds API
-    async function fetchOddsData(team) {
-        if (!team) return null; // Handle free agents
+        const game = schedule.events.find(event => {
+            return event.competitions[0].competitors.some(c => c.team.abbreviation === teamAbbr);
+        });
 
-        const oddsResponse = await fetch(`https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey=${oddsApiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american`);
-        if (!oddsResponse.ok) throw new Error('Failed to fetch odds data');
-        const odds = await oddsResponse.json();
+        if (!game) return { opponent: 'BYE', gameTime: 'N/A' };
 
-        const game = odds.find(g => g.home_team.includes(team) || g.away_team.includes(team));
-        if (!game) return { gameInfo: 'No odds available' };
-        
-        // This is a simplified example; a real app would find the best line from multiple bookmakers
-        const bookmaker = game.bookmakers[0];
-        const market = bookmaker.markets.find(m => m.key === 'spreads');
-        const totalMarket = bookmaker.markets.find(m => m.key === 'totals');
-
-        const teamOutcome = market.outcomes.find(o => o.name.includes(team));
+        const competition = game.competitions[0];
+        const playerTeam = competition.competitors.find(c => c.team.abbreviation === teamAbbr);
+        const opponentTeam = competition.competitors.find(c => c.team.abbreviation !== teamAbbr);
         
         return {
-            spread: `${team} ${teamOutcome.point > 0 ? '+' : ''}${teamOutcome.point}`,
-            total: totalMarket.outcomes[0].point,
-            gameTime: new Date(game.commence_time).toLocaleString(),
-            // In a real app, you would fetch player props here using the game ID
+            opponent: opponentTeam.team.abbreviation,
+            gameTime: new Date(competition.date).toLocaleString(),
         };
     }
 
-    // Fetches opponent and defensive rank (placeholder data)
-    async function fetchMatchupData(team) {
-         if (!team) return null;
-        // NOTE: Free APIs for live, accurate "Fantasy Points Allowed" are rare.
-        // This function uses placeholder data to simulate the feature.
-        // In a real-world application, this would be replaced with a premium data source.
-        const stateResponse = await fetch('https://api.sleeper.app/v1/state/nfl');
-        const nflState = await stateResponse.json();
-        const week = nflState.week;
+    // Fetches game odds from The Odds API
+    async function fetchOddsData(teamAbbr) {
+        if (!teamAbbr) return null;
+        
+        const fullTeamName = teamNameMap[teamAbbr];
+        if (!fullTeamName) return null;
 
-        // This is a placeholder for opponent data. A real app would need a reliable schedule API.
-        const opponent = "Opponent"; // Placeholder
-        const defensiveRank = Math.floor(Math.random() * 32) + 1; // Random rank from 1-32
+        const oddsResponse = await fetch(`https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey=${oddsApiKey}&regions=us&markets=spreads,totals`);
+        if (!oddsResponse.ok) throw new Error('Failed to fetch odds data');
+        const odds = await oddsResponse.json();
+        
+        const game = odds.find(g => g.home_team === fullTeamName || g.away_team === fullTeamName);
+        if (!game || !game.bookmakers.length) return { spread: 'N/A', total: 'N/A' };
+        
+        const market = game.bookmakers[0].markets.find(m => m.key === 'spreads');
+        const totalMarket = game.bookmakers[0].markets.find(m => m.key === 'totals');
 
-        return { opponent, defensiveRank };
+        if (!market || !totalMarket) return { spread: 'N/A', total: 'N/A' };
+
+        const teamOutcome = market.outcomes.find(o => o.name === fullTeamName);
+        
+        return {
+            spread: `${teamAbbr} ${teamOutcome.point > 0 ? '+' : ''}${teamOutcome.point}`,
+            total: totalMarket.outcomes[0].point,
+        };
     }
 
     // --- DOM MANIPULATION ---
-    function createPlayerBox(playerData, oddsData, matchupData) {
+    function createPlayerBox(playerData, gameData, oddsData, projections) {
         const newBox = playerBoxTemplate.cloneNode(true);
         newBox.classList.remove('player-box-template');
         newBox.style.display = 'block';
 
-        // Populate header
-        newBox.querySelector('.player-headshot').src = `https://sleepercdn.com/avatars/thumb/${playerData.avatar_id || '0'}`;
-        newBox.querySelector('.player-headshot').alt = playerData.full_name;
+        newBox.querySelector('.player-headshot').src = `https://sleepercdn.com/avatars/thumb/${playerData.avatar || '0'}`;
         newBox.querySelector('.player-name').textContent = playerData.full_name;
         newBox.querySelector('.player-team').textContent = `${playerData.position}, ${playerData.team || 'FA'}`;
         
-        // Populate game info
+        if (gameData) {
+            newBox.querySelector('.opponent').textContent = gameData.opponent || 'N/A';
+            newBox.querySelector('.game-time').textContent = gameData.gameTime;
+        }
         if (oddsData) {
-            newBox.querySelector('.opponent').textContent = matchupData.opponent;
             newBox.querySelector('.spread').textContent = oddsData.spread || '';
             newBox.querySelector('.total').textContent = oddsData.total || '';
-            newBox.querySelector('.game-time').textContent = oddsData.gameTime || 'TBD';
-        }
-
-        // Populate matchup stats
-        if (matchupData) {
-            newBox.querySelector('.stat-value').textContent = matchupData.defensiveRank;
-            newBox.querySelector('.stat-label').textContent = `FPs to ${playerData.position}`;
         }
         
-        // NOTE: Player props would be populated here. The free tier of The Odds API
-        // has limited access to player prop markets. This section is a placeholder.
+        newBox.querySelector('.stat-value').textContent = Math.floor(Math.random() * 32) + 1; // Placeholder
+        newBox.querySelector('.stat-label').textContent = `FPs to ${playerData.position}`;
+        
+        // --- NEW: Populate Player Projections ---
         const propsList = newBox.querySelector('.player-props ul');
-        propsList.innerHTML = `<li><span>Player props not available on free plan</span></li>`;
+        propsList.innerHTML = ''; // Clear existing
+        const relevantProps = {
+            'rec_yd': 'Rec Yds:',
+            'rec': 'Receptions:',
+            'pass_yd': 'Pass Yds:',
+            'pass_td': 'Pass TDs:',
+            'rush_yd': 'Rush Yds:',
+            'td': 'Any TD:' // This is a general TD projection
+        };
 
-        // Add close button functionality
+        let propsFound = 0;
+        for (const propKey in relevantProps) {
+            if (projections[propKey]) {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${relevantProps[propKey]}</span><span class="prop-value">${projections[propKey]}</span>`;
+                propsList.appendChild(li);
+                propsFound++;
+            }
+        }
+
+        if (propsFound === 0) {
+            propsList.innerHTML = `<li><span>No projections available</span></li>`;
+        }
+
+
         const closeBtn = newBox.querySelector('.close-btn');
         closeBtn.addEventListener('click', () => {
             playerComparisonArea.removeChild(newBox);
