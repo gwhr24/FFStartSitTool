@@ -1,9 +1,14 @@
-/* General Body and Theme Styling */
+/* Universal Settings and Global Theme */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     background-color: #0D1B2A; /* Dark navy background */
-    color: #E0E1DD; /* Off-white text for readability */
+    color: #E0E1DD; /* Off-white text */
     font-family: 'Roboto', sans-serif;
-    margin: 0;
     padding: 20px;
     display: flex;
     justify-content: center;
@@ -11,17 +16,17 @@ body {
 
 .container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1300px;
 }
 
-/* Header and Search Bar */
+/* Header and Search Bar Styling */
 header {
     text-align: center;
     margin-bottom: 40px;
 }
 
 header h1 {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     color: #FFFFFF;
     margin-bottom: 20px;
 }
@@ -36,19 +41,17 @@ header h1 {
 #player-search {
     width: 100%;
     padding: 15px;
-    border: 1px solid #415A77; /* Muted blue border */
+    border: 1px solid #415A77;
     border-radius: 8px;
-    background-color: #1B263B; /* Darker blue for input */
+    background-color: #1B263B;
     color: #E0E1DD;
     font-size: 1rem;
-    box-sizing: border-box;
 }
 
 #player-search::placeholder {
     color: #778DA9;
 }
 
-/* This is for the search results dropdown we'll build in the JS step */
 #search-results {
     position: absolute;
     width: 100%;
@@ -59,24 +62,27 @@ header h1 {
     max-height: 300px;
     overflow-y: auto;
     z-index: 1000;
+    text-align: left;
 }
 
-/* Player Comparison Area Layout */
+/* Player Comparison Grid (Responsive by default) */
 #player-comparison-area {
     display: grid;
+    /* This creates a responsive grid that fits as many 320px columns as possible */
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 20px;
 }
 
-/* Individual Player Box Styling (Based on your image) */
+/* Individual Player Box Styling */
 .player-box {
-    background-color: #1B263B; /* Main box background color */
+    background-color: #1B263B;
     border-radius: 12px;
     padding: 15px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid #415A77;
 }
 
 .box-header {
@@ -95,20 +101,18 @@ header h1 {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    object-fit: cover;
+    object-fit: cover; /* Prevents image from being squished */
     border: 2px solid #415A77;
 }
 
 .player-name {
     font-size: 1.2rem;
     font-weight: 700;
-    margin: 0;
 }
 
 .player-team {
     font-size: 0.9rem;
     color: #778DA9;
-    margin: 0;
 }
 
 .close-btn {
@@ -121,7 +125,7 @@ header h1 {
 }
 
 .game-info {
-    background-color: #0d2137; /* Slightly different blue for section */
+    background-color: #0d2137;
     border-radius: 8px;
     padding: 12px;
     text-align: center;
@@ -130,7 +134,8 @@ header h1 {
 
 .matchup-line {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 10px;
     align-items: center;
     margin-bottom: 8px;
     font-weight: 500;
@@ -138,6 +143,7 @@ header h1 {
 
 .opponent {
     font-weight: 700;
+    font-size: 1.1rem;
 }
 
 .game-time {
@@ -157,39 +163,36 @@ header h1 {
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    background-color: #9ef01a; /* Lime green from image */
+    background: linear-gradient(145deg, #a8ff1d, #8dcf18);
     color: #0D1B2A;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 1.8rem;
     font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .stat-label {
-    margin: 0;
     font-weight: 500;
-    color: #E0E1DD;
 }
 
-.player-props h4 {
+.player-projections h4 {
     text-align: center;
-    color: #41A5EE; /* Light blue for the section title */
+    color: #41A5EE;
     margin: 0 0 10px 0;
     font-weight: 700;
     letter-spacing: 1px;
 }
 
-.player-props ul {
+.player-projections ul {
     list-style: none;
-    padding: 0;
-    margin: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.player-props li {
+.player-projections li {
     display: flex;
     justify-content: space-between;
     font-size: 1rem;
@@ -197,26 +200,20 @@ header h1 {
 
 .prop-value {
     font-weight: 700;
-    color: #FF474C; /* Reddish color for odds */
-}
-.player-headshot {
-    object-fit: cover; /* Prevents image distortion */
+    color: #E0E1DD;
 }
 
-/* Adds styling for the search result dropdown */
-.search-result-item {
-    padding: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 1.8rem;
+    }
 
-.search-result-item:hover {
-    background-color: #415A77;
-}
-.search-result-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
+    #player-comparison-area {
+        gap: 15px;
+    }
 }
