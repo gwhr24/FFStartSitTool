@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Football Start/Sit Tool</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Fantasy Football Start/Sit Tool</h1>
+            <div class="search-container">
+                <input type="text" id="player-search" placeholder="Search for a player (e.g., Chris Godwin)...">
+                <div id="search-results"></div>
+            </div>
+        </header>
+
+        <main id="player-comparison-area">
+            
+            <div class="player-box-template" style="display: none;">
+                <div class="player-box">
+                    <div class="box-header">
+                        <div class="player-info">
+                            <img src="https://sleepercdn.com/content/nfl/players/4984.jpg" alt="Player Headshot" class="player-headshot">
+                            <div>
+                                <p class="player-name">Chris Godwin</p>
+                                <p class="player-team">TB</p>
+                            </div>
+                        </div>
+                        <button class="close-btn">&times;</button>
+                    </div>
+
+                    <div class="game-info">
+                        <div class="matchup-line">
+                            <span>vs</span>
+                            <span class="opponent">PHI</span>
+                            <span class="spread">TB +3.5</span>
+                            <span class="total">44.5</span>
+                        </div>
+                        <div class="game-time">
+                            Sun, Sep 28, 1:00 PM EDT
+                        </div>
+                    </div>
+
+                    <div class="matchup-stats">
+                        <div class="stat-circle">
+                            <span class="stat-value">17</span>
+                        </div>
+                        <p class="stat-label">FPs to WR</p>
+                    </div>
+
+                    <div class="player-props">
+                        <h4>PLAYER PROPS</h4>
+                        <ul>
+                            <li>
+                                <span>Rec Yds:</span>
+                                <span class="prop-value">30.5</span>
+                            </li>
+                            <li>
+                                <span>Receptions:</span>
+                                <span class="prop-value">2.5</span>
+                            </li>
+                            <li>
+                                <span>Any TD:</span>
+                                <span class="prop-value">+270</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
