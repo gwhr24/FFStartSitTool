@@ -17,7 +17,7 @@
         <header>
             <h1>Fantasy Football Start/Sit Tool</h1>
             <div class="search-container">
-                <input type="text" id="player-search" placeholder="Search for a player (e.g., Ladd McConkey)...">
+                <input type="text" id="player-search" placeholder="Search for a player...">
                 <div id="search-results"></div>
             </div>
         </header>
@@ -28,11 +28,8 @@
                 <div class="player-box">
                     <div class="box-header">
                         <div class="player-info">
-                            <img src="" alt="Player Headshot" class="player-headshot">
-                            <div>
-                                <p class="player-name">Player Name</p>
-                                <p class="player-team">Position, Team</p>
-                            </div>
+                            <p class="player-name">Player Name</p>
+                            <p class="player-team">Position, Team</p>
                         </div>
                         <button class="close-btn">&times;</button>
                     </div>
@@ -41,6 +38,8 @@
                         <div class="matchup-line">
                             <span>vs</span>
                             <span class="opponent">OPP</span>
+                            <span class="spread">SPREAD</span>
+                            <span class="total">TOTAL</span>
                         </div>
                         <div class="game-time">
                             Game Time
@@ -54,8 +53,8 @@
                         <p class="stat-label">FPs to POS</p>
                     </div>
 
-                    <div class="player-projections">
-                        <h4>PLAYER PROJECTIONS</h4>
+                    <div class="player-props">
+                        <h4>PLAYER PROPS</h4>
                         <ul>
                             </ul>
                     </div>
