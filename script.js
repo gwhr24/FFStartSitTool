@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONFIGURATION ---
-    // IMPORTANT: Paste your API key from The Odds API here.
-    const oddsApiKey = '0ee3ceb8b6bd4a72f61773a3cf9aeda5';
+    // PASTE THE RAW GITHUB URL FOR YOUR JSON FILE HERE
+    const defensiveStatsURL = 'https://raw.githubusercontent.com/gwhr24/FFStartSitTool/refs/heads/main/defensive_stats.json';
 
     // --- DOM ELEMENT REFERENCES ---
     const searchInput = document.getElementById('player-search');
@@ -11,43 +11,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerBoxTemplate = document.querySelector('.player-box-template');
 
     // --- STATE MANAGEMENT ---
-    let allPlayers = {}; // Stores all NFL players from Sleeper
+    let allPlayers = {};
+    let gameOddsData = [];
+    let defensiveStats = {};
     let displayedPlayerIds = new Set();
-
-    // --- DATA MAPS ---
-    // Maps team abbreviations from Sleeper to full names used by The Odds API
-    const teamNameMap = {
-        "ARI": "Arizona Cardinals", "ATL": "Atlanta Falcons", "BAL": "Baltimore Ravens",
-        "BUF": "Buffalo Bills", "CAR": "Carolina Panthers", "CHI": "Chicago Bears",
-        "CIN": "Cincinnati Bengals", "CLE": "Cleveland Browns", "DAL": "Dallas Cowboys",
-        "DEN": "Denver Broncos", "DET": "Detroit Lions", "GB": "Green Bay Packers",
-        "HOU": "Houston Texans", "IND": "Indianapolis Colts", "JAX": "Jacksonville Jaguars",
-        "KC": "Kansas City Chiefs", "LAC": "Los Angeles Chargers", "LAR": "Los Angeles Rams",
-        "LV": "Las Vegas Raiders", "MIA": "Miami Dolphins", "MIN": "Minnesota Vikings",
-        "NE": "New England Patriots", "NO": "New Orleans Saints", "NYG": "New York Giants",
-        "NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
-        "SF": "San Francisco 49ers", "SEA": "Seattle Seahawks", "TB": "Tampa Bay Buccaneers",
-        "TEN": "Tennessee Titans", "WAS": "Washington Commanders"
-    };
-    
-    // Maps API prop keys to human-readable labels
-    const propKeyMap = {
-        "player_pass_yds_over_under": "Pass Yds", "player_pass_tds_over_under": "Pass TDs",
-        "player_pass_completions_over_under": "Pass Comps", "player_pass_interceptions_over_under": "INTs",
-        "player_rush_yds_over_under": "Rush Yds", "player_rush_tds_over_under": "Rush TDs",
-        "player_rec_yds_over_under": "Rec Yds", "player_receptions_over_under": "Receptions",
-        "player_rec_tds_over_under": "Rec TDs", "player_tds_over_under": "Anytime TD"
-    };
 
     // --- INITIALIZATION ---
     async function initializeApp() {
         try {
-            const response = await fetch('https://api.sleeper.app/v1/players/nfl');
-            if (!response.ok) throw new Error('Failed to fetch player data from Sleeper');
-            allPlayers = await response.json();
-            console.log('Player data loaded successfully.');
+            const [playersResponse, oddsResponse, statsResponse] = await Promise.all([
+                fetch('https://api.sleeper.app/v1/players/nfl'),
+                fetch('https://ssportsgameodds.com/new/api/v2/odds/2/2/2'),
+                fetch(defensiveStatsURL)
+            ]);
+            
+            if (!playersResponse.ok) throw new Error('Failed to fetch player data');
+            if (!oddsResponse.ok) throw new Error('Failed to fetch odds data');
+            if (!statsResponse.ok) throw new Error('Failed to fetch defensive stats from GitHub');
+
+            allPlayers = await playersResponse.json();
+            const rawOddsData = await oddsResponse.json();
+            gameOddsData = rawOddsData.data.events;
+            defensiveStats = await statsResponse.json();
+            
+            console.log('All data loaded successfully.');
         } catch (error) {
             console.error("Initialization Error:", error);
+            alert('Failed to load initial data. One of the data sources may be offline or the URL is incorrect. Please refresh to try again.');
         }
     }
 
@@ -74,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- PLAYER SELECTION & DATA FETCHING ---
-    async function selectPlayer(playerId) {
+    // --- PLAYER SELECTION & DATA PARSING ---
+    function selectPlayer(playerId) {
         if (displayedPlayerIds.has(playerId)) return alert('Player is already displayed.');
         if (displayedPlayerIds.size >= 6) return alert('Maximum of 6 players can be displayed.');
 
@@ -85,70 +75,65 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             displayedPlayerIds.add(playerId);
             const playerData = allPlayers[playerId];
-            // Fetch all betting data from The Odds API
-            const bettingData = await fetchBettingData(playerData);
-            createPlayerBox(playerData, bettingData);
+            const consolidatedData = consolidateAllData(playerData);
+            createPlayerBox(playerData, consolidatedData);
         } catch (error) {
             console.error(`Error processing player ${playerId}:`, error);
             displayedPlayerIds.delete(playerId);
-            alert('Could not fetch betting data for the selected player.');
+            alert('Could not find or process data for the selected player.');
         }
     }
 
-    // --- CORE API LOGIC ---
-    async function fetchBettingData(playerData) {
-        const fullTeamName = teamNameMap[playerData.team];
-        if (!fullTeamName) throw new Error("Team not found");
+    // --- CORE DATA-CONSOLIDATION LOGIC ---
+    function consolidateAllData(playerData) {
+        if (!playerData.team) return { error: "Player is a Free Agent" };
 
-        // Step 1: Fetch all upcoming games to find the correct game ID
-        const gamesResponse = await fetch(`https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey=${oddsApiKey}&regions=us&markets=spreads,totals`);
-        if (!gamesResponse.ok) throw new Error('Failed to fetch game odds');
-        const games = await gamesResponse.json();
-
-        const game = games.find(g => g.home_team === fullTeamName || g.away_team === fullTeamName);
-        if (!game) return { error: "Game not found" };
-
-        // Extract general game info
-        const opponent = game.home_team === fullTeamName ? game.away_team : game.home_team;
-        const bookmaker = game.bookmakers[0];
-        const spreadMarket = bookmaker.markets.find(m => m.key === 'spreads');
-        const totalMarket = bookmaker.markets.find(m => m.key === 'totals');
-        const teamSpread = spreadMarket.outcomes.find(o => o.name === fullTeamName);
-
-        const gameInfo = {
-            opponent: Object.keys(teamNameMap).find(key => teamNameMap[key] === opponent),
-            spread: `${playerData.team} ${teamSpread.point > 0 ? '+' : ''}${teamSpread.point}`,
-            total: totalMarket.outcomes[0].point,
-            gameTime: new Date(game.commence_time).toLocaleString(),
-            props: []
-        };
+        const game = gameOddsData.find(g => g.home_team_abbr === playerData.team || g.away_team_abbr === playerData.team);
+        if (!game) return { error: "Game not found for this player" };
         
-        // Step 2: Fetch player props for that specific game using its ID
-        const propsResponse = await fetch(`https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/${game.id}/odds?apiKey=${oddsApiKey}&regions=us&markets=${Object.keys(propKeyMap).join(',')}`);
-        if (!propsResponse.ok) { // This might fail if props aren't available, so we don't throw an error
-            console.warn("Could not fetch player props for this game.");
-            return gameInfo; // Return game info even if props fail
+        const opponentAbbr = game.home_team_abbr === playerData.team ? game.away_team_abbr : game.home_team_abbr;
+        const opponentStats = defensiveStats[opponentAbbr] || {};
+        
+        const odds = game.odds?.[0];
+        const spread = odds ? (game.home_team_abbr === playerData.team ? odds.spread.home_team : odds.spread.away_team) : 'N/A';
+        
+        // Determine which defensive stats to show based on player position
+        let epaStat, fpRank;
+        const pos = playerData.position;
+        if (pos === 'QB' || pos === 'WR' || pos === 'TE') {
+            epaStat = opponentStats.epa_per_pass_defense;
+        } else if (pos === 'RB') {
+            epaStat = opponentStats.epa_per_run_defense;
         }
-        const propsData = await propsResponse.json();
         
-        // Step 3: Parse the props to find ones matching our player
-        const playerPropsBookmaker = propsData.bookmakers.find(b => b.markets.length > 0);
-        if (playerPropsBookmaker) {
-            playerPropsBookmaker.markets.forEach(market => {
-                // Check if the prop is for our player and is a recognized prop type
-                if (market.description.includes(playerData.full_name) && propKeyMap[market.key]) {
-                    gameInfo.props.push({
-                        label: propKeyMap[market.key],
-                        value: market.outcomes.find(o => o.name === 'Over')?.point || 'N/A'
-                    });
+        if (pos === 'QB') fpRank = opponentStats.fantasy_points_allowed_qb_rank;
+        else if (pos === 'RB') fpRank = opponentStats.fantasy_points_allowed_rb_rank;
+        else if (pos === 'WR') fpRank = opponentStats.fantasy_points_allowed_wr_rank;
+        else if (pos === 'TE') fpRank = opponentStats.fantasy_points_allowed_te_rank;
+        
+        // Find player props
+        const props = [];
+        if (game.player_props?.length > 0) {
+            game.player_props.forEach(prop => {
+                if (prop.player_name.includes(playerData.first_name) && prop.player_name.includes(playerData.last_name)) {
+                    props.push({ label: prop.prop_name, value: prop.over_under });
                 }
             });
         }
-        return gameInfo;
+
+        return {
+            opponent: opponentAbbr,
+            spread: `${playerData.team} ${spread}`,
+            total: odds?.over_under || 'N/A',
+            gameTime: new Date(game.start_date).toLocaleString(),
+            fpRank: fpRank || 'N/A',
+            epaStat: epaStat?.toFixed(3) || 'N/A',
+            props
+        };
     }
 
     // --- DOM MANIPULATION ---
-    function createPlayerBox(playerData, bettingData) {
+    function createPlayerBox(playerData, consolidatedData) {
         const newBox = playerBoxTemplate.cloneNode(true);
         newBox.classList.remove('player-box-template');
         newBox.style.display = 'block';
@@ -156,30 +141,31 @@ document.addEventListener('DOMContentLoaded', () => {
         newBox.querySelector('.player-name').textContent = playerData.full_name;
         newBox.querySelector('.player-team').textContent = `${playerData.position}, ${playerData.team || 'FA'}`;
         
-        if (bettingData && !bettingData.error) {
-            newBox.querySelector('.opponent').textContent = bettingData.opponent;
-            newBox.querySelector('.spread').textContent = bettingData.spread;
-            newBox.querySelector('.total').textContent = bettingData.total;
-            newBox.querySelector('.game-time').textContent = bettingData.gameTime;
+        if (consolidatedData && !consolidatedData.error) {
+            newBox.querySelector('.opponent').textContent = consolidatedData.opponent;
+            newBox.querySelector('.spread').textContent = consolidatedData.spread;
+            newBox.querySelector('.total').textContent = consolidatedData.total;
+            newBox.querySelector('.game-time').textContent = consolidatedData.gameTime;
+            
+            newBox.querySelector('#fp-rank-value').textContent = consolidatedData.fpRank;
+            newBox.querySelector('#epa-value').textContent = consolidatedData.epaStat;
 
             const propsList = newBox.querySelector('.player-props ul');
             propsList.innerHTML = '';
-            if (bettingData.props.length > 0) {
-                bettingData.props.forEach(prop => {
+            if (consolidatedData.props.length > 0) {
+                consolidatedData.props.forEach(prop => {
                     const li = document.createElement('li');
                     li.innerHTML = `<span>${prop.label}:</span><span class="prop-value">${prop.value}</span>`;
                     propsList.appendChild(li);
                 });
             } else {
-                propsList.innerHTML = `<li><span>No props available for this player.</span></li>`;
+                propsList.innerHTML = `<li><span>No props available.</span></li>`;
             }
         } else {
-             newBox.querySelector('.game-info').textContent = "Game data not available.";
+             newBox.querySelector('.game-info').textContent = consolidatedData.error || "Game data not available.";
+             newBox.querySelector('.matchup-stats').innerHTML = `<p>No matchup stats found.</p>`;
              newBox.querySelector('.player-props ul').innerHTML = `<li><span>N/A</span></li>`;
         }
-
-        newBox.querySelector('.stat-value').textContent = Math.floor(Math.random() * 32) + 1;
-        newBox.querySelector('.stat-label').textContent = `FPs to ${playerData.position}`;
 
         newBox.querySelector('.close-btn').addEventListener('click', () => {
             playerComparisonArea.removeChild(newBox);
