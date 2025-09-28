@@ -1,0 +1,258 @@
+{
+  "MIN": {
+    "fantasy_points_allowed_qb_rank": 31,
+    "fantasy_points_allowed_rb_rank": 23,
+    "fantasy_points_allowed_wr_rank": 32,
+    "fantasy_points_allowed_te_rank": 16,
+    "epa_per_pass_defense": -0.392,
+    "epa_per_run_defense": -0.029
+  },
+  "JAX": {
+    "fantasy_points_allowed_qb_rank": 16,
+    "fantasy_points_allowed_rb_rank": 29,
+    "fantasy_points_allowed_wr_rank": 6,
+    "fantasy_points_allowed_te_rank": 26,
+    "epa_per_pass_defense": -0.12,
+    "epa_per_run_defense": -0.099
+  },
+  "GB": {
+    "fantasy_points_allowed_qb_rank": 29,
+    "fantasy_points_allowed_rb_rank": 25,
+    "fantasy_points_allowed_wr_rank": 28,
+    "fantasy_points_allowed_te_rank": 5,
+    "epa_per_pass_defense": -0.091,
+    "epa_per_run_defense": -0.159
+  },
+  "LAC": {
+    "fantasy_points_allowed_qb_rank": 24,
+    "fantasy_points_allowed_rb_rank": 28,
+    "fantasy_points_allowed_wr_rank": 26,
+    "fantasy_points_allowed_te_rank": 25,
+    "epa_per_pass_defense": -0.109,
+    "epa_per_run_defense": -0.1
+  },
+  "ATL": {
+    "fantasy_points_allowed_qb_rank": 30,
+    "fantasy_points_allowed_rb_rank": 27,
+    "fantasy_points_allowed_wr_rank": 29,
+    "fantasy_points_allowed_te_rank": 32,
+    "epa_per_pass_defense": -0.063,
+    "epa_per_run_defense": -0.121
+  },
+  "LA": {
+    "fantasy_points_allowed_qb_rank": 21,
+    "fantasy_points_allowed_rb_rank": 32,
+    "fantasy_points_allowed_wr_rank": 15,
+    "fantasy_points_allowed_te_rank": 17,
+    "epa_per_pass_defense": -0.096,
+    "epa_per_run_defense": -0.047
+  },
+  "DEN": {
+    "fantasy_points_allowed_qb_rank": 25,
+    "fantasy_points_allowed_rb_rank": 15,
+    "fantasy_points_allowed_wr_rank": 25,
+    "fantasy_points_allowed_te_rank": 20,
+    "epa_per_pass_defense": -0.021,
+    "epa_per_run_defense": -0.161
+  },
+  "CAR": {
+    "fantasy_points_allowed_qb_rank": 32,
+    "fantasy_points_allowed_rb_rank": 17,
+    "fantasy_points_allowed_wr_rank": 30,
+    "fantasy_points_allowed_te_rank": 8,
+    "epa_per_pass_defense": -0.105,
+    "epa_per_run_defense": 0.007
+  },
+  "SEA": {
+    "fantasy_points_allowed_qb_rank": 18,
+    "fantasy_points_allowed_rb_rank": 9,
+    "fantasy_points_allowed_wr_rank": 31,
+    "fantasy_points_allowed_te_rank": 1,
+    "epa_per_pass_defense": 0.039,
+    "epa_per_run_defense": -0.241
+  },
+  "SF": {
+    "fantasy_points_allowed_qb_rank": 27,
+    "fantasy_points_allowed_rb_rank": 26,
+    "fantasy_points_allowed_wr_rank": 27,
+    "fantasy_points_allowed_te_rank": 13,
+    "epa_per_pass_defense": -0.014,
+    "epa_per_run_defense": -0.106
+  },
+  "IND": {
+    "fantasy_points_allowed_qb_rank": 28,
+    "fantasy_points_allowed_rb_rank": 21,
+    "fantasy_points_allowed_wr_rank": 19,
+    "fantasy_points_allowed_te_rank": 15,
+    "epa_per_pass_defense": -0.09,
+    "epa_per_run_defense": 0.048
+  },
+  "TB": {
+    "fantasy_points_allowed_qb_rank": 14,
+    "fantasy_points_allowed_rb_rank": 16,
+    "fantasy_points_allowed_wr_rank": 21,
+    "fantasy_points_allowed_te_rank": 27,
+    "epa_per_pass_defense": 0.107,
+    "epa_per_run_defense": -0.353
+  },
+  "CLE": {
+    "fantasy_points_allowed_qb_rank": 19,
+    "fantasy_points_allowed_rb_rank": 31,
+    "fantasy_points_allowed_wr_rank": 24,
+    "fantasy_points_allowed_te_rank": 21,
+    "epa_per_pass_defense": 0.105,
+    "epa_per_run_defense": -0.167
+  },
+  "HOU": {
+    "fantasy_points_allowed_qb_rank": 23,
+    "fantasy_points_allowed_rb_rank": 10,
+    "fantasy_points_allowed_wr_rank": 13,
+    "fantasy_points_allowed_te_rank": 24,
+    "epa_per_pass_defense": 0.013,
+    "epa_per_run_defense": -0.035
+  },
+  "WAS": {
+    "fantasy_points_allowed_qb_rank": 8,
+    "fantasy_points_allowed_rb_rank": 30,
+    "fantasy_points_allowed_wr_rank": 8,
+    "fantasy_points_allowed_te_rank": 10,
+    "epa_per_pass_defense": 0.107,
+    "epa_per_run_defense": -0.182
+  },
+  "PHI": {
+    "fantasy_points_allowed_qb_rank": 20,
+    "fantasy_points_allowed_rb_rank": 20,
+    "fantasy_points_allowed_wr_rank": 16,
+    "fantasy_points_allowed_te_rank": 29,
+    "epa_per_pass_defense": 0.049,
+    "epa_per_run_defense": -0.081
+  },
+  "ARI": {
+    "fantasy_points_allowed_qb_rank": 12,
+    "fantasy_points_allowed_rb_rank": 8,
+    "fantasy_points_allowed_wr_rank": 9,
+    "fantasy_points_allowed_te_rank": 12,
+    "epa_per_pass_defense": 0.108,
+    "epa_per_run_defense": -0.202
+  },
+  "DET": {
+    "fantasy_points_allowed_qb_rank": 7,
+    "fantasy_points_allowed_rb_rank": 24,
+    "fantasy_points_allowed_wr_rank": 10,
+    "fantasy_points_allowed_te_rank": 6,
+    "epa_per_pass_defense": 0.22,
+    "epa_per_run_defense": -0.289
+  },
+  "LV": {
+    "fantasy_points_allowed_qb_rank": 11,
+    "fantasy_points_allowed_rb_rank": 22,
+    "fantasy_points_allowed_wr_rank": 3,
+    "fantasy_points_allowed_te_rank": 28,
+    "epa_per_pass_defense": 0.23,
+    "epa_per_run_defense": -0.26
+  },
+  "CIN": {
+    "fantasy_points_allowed_qb_rank": 13,
+    "fantasy_points_allowed_rb_rank": 2,
+    "fantasy_points_allowed_wr_rank": 17,
+    "fantasy_points_allowed_te_rank": 4,
+    "epa_per_pass_defense": 0.046,
+    "epa_per_run_defense": 0.046
+  },
+  "KC": {
+    "fantasy_points_allowed_qb_rank": 26,
+    "fantasy_points_allowed_rb_rank": 19,
+    "fantasy_points_allowed_wr_rank": 20,
+    "fantasy_points_allowed_te_rank": 30,
+    "epa_per_pass_defense": 0.029,
+    "epa_per_run_defense": 0.083
+  },
+  "BUF": {
+    "fantasy_points_allowed_qb_rank": 17,
+    "fantasy_points_allowed_rb_rank": 13,
+    "fantasy_points_allowed_wr_rank": 23,
+    "fantasy_points_allowed_te_rank": 31,
+    "epa_per_pass_defense": 0.043,
+    "epa_per_run_defense": 0.065
+  },
+  "PIT": {
+    "fantasy_points_allowed_qb_rank": 5,
+    "fantasy_points_allowed_rb_rank": 14,
+    "fantasy_points_allowed_wr_rank": 18,
+    "fantasy_points_allowed_te_rank": 2,
+    "epa_per_pass_defense": 0.195,
+    "epa_per_run_defense": -0.114
+  },
+  "NE": {
+    "fantasy_points_allowed_qb_rank": 15,
+    "fantasy_points_allowed_rb_rank": 11,
+    "fantasy_points_allowed_wr_rank": 7,
+    "fantasy_points_allowed_te_rank": 22,
+    "epa_per_pass_defense": 0.245,
+    "epa_per_run_defense": -0.194
+  },
+  "NO": {
+    "fantasy_points_allowed_qb_rank": 6,
+    "fantasy_points_allowed_rb_rank": 7,
+    "fantasy_points_allowed_wr_rank": 11,
+    "fantasy_points_allowed_te_rank": 14,
+    "epa_per_pass_defense": 0.284,
+    "epa_per_run_defense": -0.165
+  },
+  "CHI": {
+    "fantasy_points_allowed_qb_rank": 3,
+    "fantasy_points_allowed_rb_rank": 6,
+    "fantasy_points_allowed_wr_rank": 4,
+    "fantasy_points_allowed_te_rank": 9,
+    "epa_per_pass_defense": 0.174,
+    "epa_per_run_defense": -0.028
+  },
+  "BAL": {
+    "fantasy_points_allowed_qb_rank": 4,
+    "fantasy_points_allowed_rb_rank": 1,
+    "fantasy_points_allowed_wr_rank": 14,
+    "fantasy_points_allowed_te_rank": 7,
+    "epa_per_pass_defense": 0.122,
+    "epa_per_run_defense": 0.141
+  },
+  "NYJ": {
+    "fantasy_points_allowed_qb_rank": 10,
+    "fantasy_points_allowed_rb_rank": 12,
+    "fantasy_points_allowed_wr_rank": 12,
+    "fantasy_points_allowed_te_rank": 19,
+    "epa_per_pass_defense": 0.319,
+    "epa_per_run_defense": -0.094
+  },
+  "NYG": {
+    "fantasy_points_allowed_qb_rank": 9,
+    "fantasy_points_allowed_rb_rank": 4,
+    "fantasy_points_allowed_wr_rank": 2,
+    "fantasy_points_allowed_te_rank": 11,
+    "epa_per_pass_defense": 0.182,
+    "epa_per_run_defense": 0.129
+  },
+  "TEN": {
+    "fantasy_points_allowed_qb_rank": 22,
+    "fantasy_points_allowed_rb_rank": 3,
+    "fantasy_points_allowed_wr_rank": 5,
+    "fantasy_points_allowed_te_rank": 23,
+    "epa_per_pass_defense": 0.165,
+    "epa_per_run_defense": 0.189
+  },
+  "DAL": {
+    "fantasy_points_allowed_qb_rank": 1,
+    "fantasy_points_allowed_rb_rank": 18,
+    "fantasy_points_allowed_wr_rank": 1,
+    "fantasy_points_allowed_te_rank": 18,
+    "epa_per_pass_defense": 0.397,
+    "epa_per_run_defense": -0.054
+  },
+  "MIA": {
+    "fantasy_points_allowed_qb_rank": 2,
+    "fantasy_points_allowed_rb_rank": 5,
+    "fantasy_points_allowed_wr_rank": 22,
+    "fantasy_points_allowed_te_rank": 3,
+    "epa_per_pass_defense": 0.44,
+    "epa_per_run_defense": 0.028
+  }
+}
