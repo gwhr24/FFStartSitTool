@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONFIGURATION ---
-    // PASTE THE RAW GITHUB URL FOR YOUR JSON FILE HERE
     const defensiveStatsURL = 'https://raw.githubusercontent.com/gwhr24/FFStartSitTool/refs/heads/main/defensive_stats.json';
 
     // --- DOM ELEMENT REFERENCES ---
@@ -16,28 +15,44 @@ document.addEventListener('DOMContentLoaded', () => {
     let defensiveStats = {};
     let displayedPlayerIds = new Set();
 
-    // --- INITIALIZATION ---
+    // --- INITIALIZATION (UPDATED FOR RESILIENCY) ---
     async function initializeApp() {
-        try {
-            const [playersResponse, oddsResponse, statsResponse] = await Promise.all([
-                fetch('https://api.sleeper.app/v1/players/nfl'),
-                fetch('https://ssportsgameodds.com/new/api/v2/odds/2/2/2'),
-                fetch(defensiveStatsURL)
-            ]);
-            
-            if (!playersResponse.ok) throw new Error('Failed to fetch player data');
-            if (!oddsResponse.ok) throw new Error('Failed to fetch odds data');
-            if (!statsResponse.ok) throw new Error('Failed to fetch defensive stats from GitHub');
+        console.log("Initializing app with resilient loading...");
 
+        // Load Player List (Critical for search)
+        try {
+            const playersResponse = await fetch('https://api.sleeper.app/v1/players/nfl');
+            if (!playersResponse.ok) throw new Error('Sleeper API failed to respond.');
             allPlayers = await playersResponse.json();
+            console.log('Player data loaded successfully.');
+        } catch (error) {
+            console.error("CRITICAL ERROR: Failed to load player data.", error);
+            alert('Could not load the player list. The search functionality will be disabled. Please refresh to try again.');
+            searchInput.disabled = true;
+            searchInput.placeholder = "Player list failed to load.";
+        }
+
+        // Load Game Odds (Non-critical)
+        try {
+            const oddsResponse = await fetch('https://ssportsgameodds.com/new/api/v2/odds/2/2/2');
+            if (!oddsResponse.ok) throw new Error(`SportsGameOdds API responded with status: ${oddsResponse.status}`);
             const rawOddsData = await oddsResponse.json();
             gameOddsData = rawOddsData.data.events;
-            defensiveStats = await statsResponse.json();
-            
-            console.log('All data loaded successfully.');
+            console.log('Game odds data loaded successfully.');
         } catch (error) {
-            console.error("Initialization Error:", error);
-            alert('Failed to load initial data. One of the data sources may be offline or the URL is incorrect. Please refresh to try again.');
+            console.warn("Warning: Could not load game odds data. Odds and props will be unavailable.", error);
+            // gameOddsData will remain an empty array, which is a safe fallback.
+        }
+
+        // Load Your Defensive Stats (Non-critical)
+        try {
+            const statsResponse = await fetch(defensiveStatsURL);
+            if (!statsResponse.ok) throw new Error(`GitHub stats file responded with status: ${statsResponse.status}`);
+            defensiveStats = await statsResponse.json();
+            console.log('Defensive stats loaded successfully.');
+        } catch (error) {
+            console.warn("Warning: Could not load your defensive stats data. Make sure the URL is correct.", error);
+            // defensiveStats will remain an empty object, which is a safe fallback.
         }
     }
 
@@ -89,15 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!playerData.team) return { error: "Player is a Free Agent" };
 
         const game = gameOddsData.find(g => g.home_team_abbr === playerData.team || g.away_team_abbr === playerData.team);
-        if (!game) return { error: "Game not found for this player" };
         
-        const opponentAbbr = game.home_team_abbr === playerData.team ? game.away_team_abbr : game.home_team_abbr;
-        const opponentStats = defensiveStats[opponentAbbr] || {};
+        const opponentAbbr = game ? (game.home_team_abbr === playerData.team ? game.away_team_abbr : game.home_team_abbr) : null;
+        const opponentStats = opponentAbbr ? defensiveStats[opponentAbbr] || {} : {};
         
-        const odds = game.odds?.[0];
+        const odds = game?.odds?.[0];
         const spread = odds ? (game.home_team_abbr === playerData.team ? odds.spread.home_team : odds.spread.away_team) : 'N/A';
         
-        // Determine which defensive stats to show based on player position
         let epaStat, fpRank;
         const pos = playerData.position;
         if (pos === 'QB' || pos === 'WR' || pos === 'TE') {
@@ -111,9 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (pos === 'WR') fpRank = opponentStats.fantasy_points_allowed_wr_rank;
         else if (pos === 'TE') fpRank = opponentStats.fantasy_points_allowed_te_rank;
         
-        // Find player props
         const props = [];
-        if (game.player_props?.length > 0) {
+        if (game?.player_props?.length > 0) {
             game.player_props.forEach(prop => {
                 if (prop.player_name.includes(playerData.first_name) && prop.player_name.includes(playerData.last_name)) {
                     props.push({ label: prop.prop_name, value: prop.over_under });
@@ -122,10 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return {
-            opponent: opponentAbbr,
-            spread: `${playerData.team} ${spread}`,
+            opponent: opponentAbbr || 'N/A',
+            spread: game ? `${playerData.team} ${spread}` : 'N/A',
             total: odds?.over_under || 'N/A',
-            gameTime: new Date(game.start_date).toLocaleString(),
+            gameTime: game ? new Date(game.start_date).toLocaleString() : 'N/A',
             fpRank: fpRank || 'N/A',
             epaStat: epaStat?.toFixed(3) || 'N/A',
             props
