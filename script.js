@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONFIGURATION ---
     // IMPORTANT: Paste your API key from The Odds API here.
-    const oddsApiKey = 'YOUR_API_KEY_HERE';
+    const oddsApiKey = '0ee3ceb8b6bd4a72f61773a3cf9aeda5';
 
     // --- DOM ELEMENT REFERENCES ---
     const searchInput = document.getElementById('player-search');
