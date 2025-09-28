@@ -65,10 +65,17 @@ header h1 {
     text-align: left;
 }
 
+.search-result-item {
+    padding: 12px;
+    cursor: pointer;
+}
+.search-result-item:hover {
+    background-color: #415A77;
+}
+
 /* Player Comparison Grid (Responsive by default) */
 #player-comparison-area {
     display: grid;
-    /* This creates a responsive grid that fits as many 320px columns as possible */
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 20px;
 }
@@ -88,26 +95,17 @@ header h1 {
 .box-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start; /* Aligns items to the top */
 }
 
 .player-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.player-headshot {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover; /* Prevents image from being squished */
-    border: 2px solid #415A77;
+    padding-top: 5px; /* Adds a little space to align text better with the close button */
 }
 
 .player-name {
     font-size: 1.2rem;
     font-weight: 700;
+    margin-bottom: 2px;
 }
 
 .player-team {
@@ -121,7 +119,7 @@ header h1 {
     color: #778DA9;
     font-size: 2rem;
     cursor: pointer;
-    padding: 0 10px;
+    line-height: 1; /* Ensures button doesn't take extra vertical space */
 }
 
 .game-info {
@@ -134,16 +132,14 @@ header h1 {
 
 .matchup-line {
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-around;
     align-items: center;
     margin-bottom: 8px;
     font-weight: 500;
 }
 
-.opponent {
+.opponent, .spread, .total {
     font-weight: 700;
-    font-size: 1.1rem;
 }
 
 .game-time {
@@ -177,7 +173,7 @@ header h1 {
     font-weight: 500;
 }
 
-.player-projections h4 {
+.player-props h4 {
     text-align: center;
     color: #41A5EE;
     margin: 0 0 10px 0;
@@ -185,14 +181,14 @@ header h1 {
     letter-spacing: 1px;
 }
 
-.player-projections ul {
+.player-props ul {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.player-projections li {
+.player-props li {
     display: flex;
     justify-content: space-between;
     font-size: 1rem;
@@ -211,9 +207,5 @@ header h1 {
     
     header h1 {
         font-size: 1.8rem;
-    }
-
-    #player-comparison-area {
-        gap: 15px;
     }
 }
